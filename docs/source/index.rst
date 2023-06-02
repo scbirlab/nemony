@@ -22,6 +22,6 @@ collisions (two texts having the same mnemonic) can happen.
 
 
 Source
-======
+------
 
-`GitHub <https://github.com/scbirlab/nemony>`_
+Find the source on `GitHub <https://github.com/scbirlab/nemony>`_.

@@ -4,6 +4,8 @@ Currently supports strings, iterables, floats and ints.
 
 """
 
+from __future__ import annotations
+
 from typing import Union
 from collections.abc import Sequence, Iterable
 
@@ -14,14 +16,24 @@ import sys
 
 import yaml
 
+def _get_data_path():
 
-def _get_corpus() -> Sequence[Sequence[str]]:
+    return os.path.join(os.path.dirname(__file__), 'words.yml')
 
-    _data_path = os.path.join(os.path.dirname(__file__), 
-                              'words.yml')
+
+def _load_corpus():
+
+    _data_path = _get_data_path()
 
     with open(_data_path, 'r') as f:
         _words = yaml.safe_load(f)
+
+    return _words
+
+
+def _get_wordlist(full: bool = False) -> Sequence[Sequence[str]]:
+
+    _words = _load_corpus()
 
     versions = _words['versions']
     word_lists = _words['word lists']
@@ -32,28 +44,11 @@ def _get_corpus() -> Sequence[Sequence[str]]:
     nouns = list(set(word_lists[latest_version]['nouns']))
     nouns.sort()
 
-    version_name = encode(adjectives + nouns,
-                          wordlist=(adjectives, nouns))
+    if full:
+        return adjectives, nouns, latest_version, _words
+    else:
+        return adjectives, nouns
     
-    if version_name != latest_version:
-
-        print(f'INFO: Word list has changed compared to {latest_version}. '
-              f'Saving new list as {version_name}.',
-              file=sys.stderr)
-        _words['versions'] = [version_name] + _words['versions'][1:]
-        del  _words['word lists'][latest_version]
-        _words['word lists'][version_name] = dict(adjectives=adjectives, 
-                                                  nouns=nouns)
-
-        with open(_data_path, 'w') as f:
-            yaml.safe_dump(_words, f, 
-                    default_flow_style=False, 
-                    width=80, indent=1)
-            
-        return _get_corpus()
-
-    return adjectives, nouns
-
 
 @singledispatch
 def hash(x, *args, **kwargs) -> str:
@@ -176,7 +171,7 @@ def encode(x: Union[str, int, float, Iterable],
 
     """
 
-    adjectives, nouns = wordlist or _get_corpus()
+    adjectives, nouns = wordlist or _DEFAULT_WORDLIST
 
     # Take the first n characters of the hash and convert to an integer
     integer = int(hash(x, n=n), base=16)
@@ -187,3 +182,34 @@ def encode(x: Union[str, int, float, Iterable],
     mnemonic = sep.join((adjective, noun))
 
     return mnemonic
+
+
+def _check_version() -> None:
+
+    adjectives, nouns, latest_version, _words = _get_wordlist(full=True)
+
+    versions = _words['versions']
+    latest_version = versions[0]
+
+    version_name = encode(adjectives + nouns,
+                          wordlist=(adjectives, nouns))
+    
+    if version_name != latest_version:
+
+        print(f'INFO: Word list has changed compared to {latest_version}. '
+              f'Saving new list as {version_name}.',
+              file=sys.stderr)
+        _words['versions'] = [version_name] + _words['versions'][1:]
+        del  _words['word lists'][latest_version]
+        _words['word lists'][version_name] = dict(adjectives=adjectives, 
+                                                  nouns=nouns)
+
+        with open(_get_data_path(), 'w') as f:
+            yaml.safe_dump(_words, f, 
+                    default_flow_style=False, 
+                    width=80, indent=1)
+            
+    return version_name
+
+_check_version()
+_DEFAULT_WORDLIST = _get_wordlist()

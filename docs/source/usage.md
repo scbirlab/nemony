@@ -74,7 +74,7 @@ options:
                         Output file. Default STDOUT.
 ```
 
-## Python package
+## Python API
 
 You can import **nemony** and use it to encode Python objects, as
 long as they can be converted to strings.
@@ -95,10 +95,10 @@ As a convenience, you can also use the SHA-256 hashing functions
 (which use Python standard library `hashlib`).
 
 ```python
->>> hash('world')
+>>> nm.hash('world')
 '486ea46224d1bb4fb680f34f7c9ad96a8f24ec88be73ea8e5a6c65260e9cb8a7'
->>> hash('world', n=8)
+>>> nm.hash('world', n=8)
 '486ea462'
->>> hash(5., n=8)
+>>> nm.hash(5., n=8)
 'a19a1584'
 ```
