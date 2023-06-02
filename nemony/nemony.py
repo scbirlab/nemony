@@ -14,6 +14,39 @@ import sys
 
 import yaml
 
+def _get_data_path():
+
+    return os.path.join(os.path.dirname(__file__), 'words.yml')
+
+
+def _load_corpus():
+
+    _data_path = _get_data_path()
+
+    with open(_data_path, 'r') as f:
+        _words = yaml.safe_load(f)
+
+    return _words
+
+
+def _get_wordlist(full: bool = False) -> Sequence[Sequence[str]]:
+
+    _words = _load_corpus()
+
+    versions = _words['versions']
+    word_lists = _words['word lists']
+    latest_version = versions[0]
+
+    adjectives = list(set(word_lists[latest_version]['adjectives']))
+    adjectives.sort()
+    nouns = list(set(word_lists[latest_version]['nouns']))
+    nouns.sort()
+
+    if full:
+        return adjectives, nouns, latest_version, _words
+    else:
+        return adjectives, nouns
+    
 
 @singledispatch
 def hash(x, *args, **kwargs) -> str:
@@ -149,22 +182,12 @@ def encode(x: Union[str, int, float, Iterable],
     return mnemonic
 
 
-def _get_corpus() -> Sequence[Sequence[str]]:
+def _check_version() -> None:
 
-    _data_path = os.path.join(os.path.dirname(__file__), 
-                              'words.yml')
-
-    with open(_data_path, 'r') as f:
-        _words = yaml.safe_load(f)
+    adjectives, nouns, latest_version, _words = _get_wordlist(full=True)
 
     versions = _words['versions']
-    word_lists = _words['word lists']
     latest_version = versions[0]
-
-    adjectives = list(set(word_lists[latest_version]['adjectives']))
-    adjectives.sort()
-    nouns = list(set(word_lists[latest_version]['nouns']))
-    nouns.sort()
 
     version_name = encode(adjectives + nouns,
                           wordlist=(adjectives, nouns))
@@ -179,14 +202,12 @@ def _get_corpus() -> Sequence[Sequence[str]]:
         _words['word lists'][version_name] = dict(adjectives=adjectives, 
                                                   nouns=nouns)
 
-        with open(_data_path, 'w') as f:
+        with open(_get_data_path(), 'w') as f:
             yaml.safe_dump(_words, f, 
                     default_flow_style=False, 
                     width=80, indent=1)
             
-        return _get_corpus()
+    return version_name
 
-    return adjectives, nouns
-
-
-_DEFAULT_WORDLIST = _get_corpus()
+_check_version()
+_DEFAULT_WORDLIST = _get_wordlist()

@@ -3,23 +3,28 @@
 import argparse
 import sys
 
-from .nemony import encode, _get_corpus
+from .nemony import _check_version, _get_wordlist, encode 
 
 def _interactive_session() -> None:
 
-    print("\n(Ctrl-C to exit.)\nWhat would you like to encode?\n",
-          file=sys.stderr)
+    print("", "(Ctrl-C to exit.)", "What would you like to encode?",
+          sep='\n',
+          file=sys.stderr, flush=True)
 
     while True:
 
         try:
+
             x = input("?> ")
-
-            print(encode(x))
-
-        except KeyboardInterrupt:
+        
+        except KeyboardInterrupt or EOFError:
 
             break
+
+        else:
+
+            if len(x) > 0:
+                print(encode(x), flush=True)
 
     return None
 
@@ -45,11 +50,12 @@ def main() -> None:
     
     args = parser.parse_args()
 
-    adjectives, nouns = _get_corpus()
+    adjectives, nouns = _get_wordlist()
+    version_name = _check_version()
 
     print('\n## MNEMO: Generate adjective-noun mnemonics',
           file=sys.stderr)
-    print(f'Word list version: {encode(adjectives + nouns)}\n',
+    print(f'Word list version: {version_name}\n',
           f'- Number of adjectives: {len(adjectives)}\n',
           f'- Number of nouns: {len(nouns)}\n',
           f'- Combinations: {len(adjectives) * len(nouns)}\n',
