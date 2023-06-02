@@ -4,6 +4,8 @@ Currently supports strings, iterables, floats and ints.
 
 """
 
+from __future__ import annotations
+
 from typing import Union
 from collections.abc import Sequence, Iterable
 
